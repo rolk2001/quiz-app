@@ -176,6 +176,18 @@ app.get('/api/admin/results', requireAdmin, async (req,res)=>{
   }
 });
 
+// Admin: delete result
+app.delete('/api/admin/results/:id', requireAdmin, async (req,res)=>{
+  try {
+    const { id } = req.params;
+    const result = await Result.findByIdAndDelete(id);
+    if (!result) return res.status(404).json({ error: 'Result not found' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, ()=>{
   console.log('Server listening on port', PORT);
 });

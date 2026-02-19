@@ -189,7 +189,7 @@ async function loadAdminData(){
   if(rres.ok){
     const results = await rres.json();
     const tbody = document.querySelector('#resultsTable tbody');
-    tbody.innerHTML = results.map(r=>`<tr><td>${escapeHtml(r.participantId)}</td><td>${escapeHtml(r.quizId)}</td><td>${r.score}</td><td>${r.correct}/${r.total}</td><td class="small">${r.ts}</td></tr>`).join('');
+    tbody.innerHTML = results.map(r=>`<tr><td>${escapeHtml(r.participantId)}</td><td>${escapeHtml(r.quizId)}</td><td>${r.score}</td><td>${r.correct}/${r.total}</td><td class="small">${r.ts}</td><td><button onclick="deleteResult('${r._id}')" style="background:#d32f2f;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.9rem">🗑️ Supprimer</button></td></tr>`).join('');
   }
 }
 
@@ -225,6 +225,61 @@ async function deleteQuiz(quizId) {
   } catch (err) {
     alert('Erreur: ' + err.message);
   }
+}
+
+async function deleteResult(resultId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce résultat?')) return;
+  const token = localStorage.getItem('adminToken');
+  const headers = Object.assign({'Content-Type':'application/json'}, token ? {'X-Admin-Token': token} : {});
+  try {
+    const r = await fetch(API_BASE + `/api/admin/results/${resultId}`, { method: 'DELETE', headers });
+    if (r.ok) {
+      alert('Résultat supprimé');
+      loadAdminData();
+    } else {
+      const err = await r.json().catch(()=>({error:'Erreur serveur'}));
+      alert('Erreur: '+(err.error||'Impossible supprimer le résultat'));
+    }
+  } catch (err) {
+    alert('Erreur: ' + err.message);
+  }
+}
+
+function exportResults() {
+  const token = localStorage.getItem('adminToken');
+  const headers = token ? {'X-Admin-Token': token} : {};
+  fetch(API_BASE + '/api/admin/results', {headers})
+    .then(r => r.json())
+    .then(results => {
+      if (!results.length) {
+        alert('Aucun résultat à exporter');
+        return;
+      }
+      // Create CSV data
+      const headers_list = ['Participant ID', 'Quiz ID', 'Score', 'Correct', 'Total', 'Timestamp'];
+      const rows = results.map(r => [
+        r.participantId,
+        r.quizId,
+        r.score,
+        r.correct,
+        r.total,
+        new Date(r.ts).toLocaleString('fr-FR')
+      ]);
+      
+      // Convert to CSV format
+      let csv = headers_list.join(',') + '\n';
+      rows.forEach(row => {
+        csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"` ).join(',') + '\n';
+      });
+      
+      // Download CSV
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `resultats-quizz-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+    })
+    .catch(err => alert('Erreur lors de l\'export: ' + err.message));
 }
 
 // If token already present try to show admin area
@@ -305,5 +360,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
       document.querySelector('#loginForm input[name="email"]').value = '';
       document.querySelector('#loginForm input[name="password"]').value = '';
     });
+  }
+
+  // Export results button
+  const exportBtn = document.getElementById('exportResultsBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportResults);
   }
 });
