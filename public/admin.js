@@ -17,12 +17,15 @@ function showQuestionModal(title, index=-1) {
     const q = questions[index];
     document.getElementById('eqText').value = q.text;
     document.getElementById('eqType').value = q.type;
-    document.getElementById('eqPoints').value = q.points || 1;
+    document.getElementById('eqPoints').value = q.type === 'case' ? 0 : (q.points || 1);
     if (q.type === 'mcq') {
       editorOptions = [...q.options];
       document.getElementById('eqAnswerIdx').value = q.answer;
-    } else {
+    } else if (q.type === 'text') {
       document.getElementById('eqTextAns').value = q.answer;
+    } else {
+      document.getElementById('eqTextAns').value = '';
+      document.getElementById('eqAnswerIdx').value = '0';
     }
   } else {
     document.getElementById('eqText').value = '';
@@ -46,6 +49,14 @@ function updateModalDisplay() {
   const type = document.getElementById('eqType').value;
   document.getElementById('eMcqArea').style.display = type === 'mcq' ? 'block' : 'none';
   document.getElementById('eTextArea').style.display = type === 'text' ? 'block' : 'none';
+  const pointsInput = document.getElementById('eqPoints');
+  if (type === 'case') {
+    pointsInput.value = '0';
+    pointsInput.disabled = true;
+  } else {
+    pointsInput.disabled = false;
+    if (!pointsInput.value || Number(pointsInput.value) < 1) pointsInput.value = '1';
+  }
 }
 
 function renderEditorOptions() {
@@ -84,6 +95,12 @@ document.getElementById('eqType').addEventListener('change', ()=> {
     editorOptions = [];
     renderEditorOptions();
     document.getElementById('eqNewOption').value = '';
+  } else if (document.getElementById('eqType').value === 'case') {
+    editorOptions = [];
+    renderEditorOptions();
+    document.getElementById('eqNewOption').value = '';
+    document.getElementById('eqTextAns').value = '';
+    document.getElementById('eqAnswerIdx').value = '0';
   }
 });
 
@@ -95,9 +112,12 @@ document.getElementById('saveQuestionBtn').addEventListener('click', ()=> {
   const pts = document.getElementById('eqPoints').value;
   const points = Number.isFinite(Number(pts)) ? Number(pts) : 1;
   if (!text) { alert('Entrez le texte de la question'); return; }
-  if (points < 1) { alert('Les points doivent être ≥1'); return; }
+  if (type !== 'case' && points < 1) { alert('Les points doivent être ≥1'); return; }
   
-  if (type === 'mcq') {
+  if (type === 'case') {
+    const q = { type: 'case', text, points: 0 };
+    if (editingIndex >= 0) questions[editingIndex] = q; else questions.push(q);
+  } else if (type === 'mcq') {
     if (editorOptions.length < 2) { alert('≥2 options requises'); return; }
     const ai = document.getElementById('eqAnswerIdx').value;
     const ansIdx = Number.isFinite(Number(ai)) ? Number(ai) : 0;
@@ -119,11 +139,11 @@ document.getElementById('cancelQuestionBtn').addEventListener('click', hideQuest
 function renderQuestionsList() {
   const el = document.getElementById('questionsList');
   if (questions.length === 0) { el.innerHTML = '<em style="color:#999">Aucune question</em>'; return; }
-  const totalPoints = questions.reduce((sum, q) => sum + (q.points || 1), 0);
+  const totalPoints = questions.reduce((sum, q) => sum + (q.type === 'case' ? 0 : (q.points || 1)), 0);
   el.innerHTML = `<div style="color:#666;margin-bottom:8px;font-size:0.9rem"><strong>Points totaux: ${totalPoints}</strong> (seront normalisés sur 20)</div>` + questions.map((q, idx) => {
-    const type = q.type === 'mcq' ? 'QCM' : 'Texte';
-    const preview = q.type === 'mcq' ? `${q.options.length} options` : `Rép: ${escapeHtml(q.answer)}`;
-    const pts = q.points || 1;
+    const type = q.type === 'mcq' ? 'QCM' : (q.type === 'text' ? 'Texte' : 'Etude de cas');
+    const preview = q.type === 'mcq' ? `${q.options.length} options` : (q.type === 'text' ? `Rep: ${escapeHtml(q.answer)}` : 'Aucune reponse');
+    const pts = q.type === 'case' ? 0 : (q.points || 1);
     return `<div style="background:#f5f5f5;padding:10px;margin:8px 0;border-radius:6px;border-left:4px solid var(--accent)">
       <div><strong>#${idx+1}</strong> (${type}, <em>${pts} pt${pts>1?'s':''}</em>) ${escapeHtml(q.text)}</div>
       <div class="small" style="color:#666;margin:6px 0">${preview}</div>

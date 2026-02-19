@@ -76,20 +76,43 @@
     if (!currentQuiz) return;
     const q = currentQuiz.questions[currentQuestionIndex];
     const totalQ = currentQuiz.questions.length;
+    const answerableTotal = currentQuiz.questions.filter(x => x.type !== 'case').length;
     const isLast = currentQuestionIndex === totalQ - 1;
-    let html = `<h2>${esc(currentQuiz.title)}</h2><p style="color:#666;font-size:0.9rem">Question ${currentQuestionIndex + 1} / ${totalQ}</p><div class="question"><p class="qtext">${esc(q.text)}</p>`;
+    const isCase = q.type === 'case';
+    const answerableIndex = isCase ? null : currentQuiz.questions.slice(0, currentQuestionIndex + 1).filter(x => x.type !== 'case').length;
+
+    let html = `<h2>${esc(currentQuiz.title)}</h2>`;
+    if (isCase) {
+      html += `<p style="color:#666;font-size:0.9rem">Etude de cas</p>`;
+    } else {
+      html += `<p style="color:#666;font-size:0.9rem">Question ${answerableIndex} / ${answerableTotal}</p>`;
+    }
+
+    // Show nearest previous case as context for sub-questions
+    const caseIndex = currentQuiz.questions.slice(0, currentQuestionIndex + 1).map((x, i) => ({x, i})).filter(obj => obj.x.type === 'case').pop();
+    if (!isCase && caseIndex) {
+      html += `<div style="background:#f7f7f7;border-left:4px solid #888;padding:10px;margin:10px 0;border-radius:6px"><strong>Etude de cas</strong><div style="margin-top:6px">${esc(caseIndex.x.text)}</div></div>`;
+    }
+
+    html += `<div class="question"><p class="qtext">${esc(q.text)}</p>`;
     if(q.type==='mcq'){
       q.options.forEach((opt,ii)=> {
         const checked = currentQuizAnswers[currentQuestionIndex] === ii ? 'checked' : '';
         html += `<label><input type="radio" name="answer" value="${ii}" ${checked}> ${esc(opt)}</label>`;
       });
-    } else {
+    } else if (q.type === 'text') {
       const txtVal = currentQuizAnswers[currentQuestionIndex] || '';
       html += `<input type="text" id="answerText" value="${esc(txtVal)}" placeholder="Votre réponse">`;
+    } else {
+      html += `<div style="color:#666">Lisez attentivement puis cliquez sur Suivant.</div>`;
     }
     html += `</div><div class="actions">`;
     if (currentQuestionIndex > 0) html += `<button type="button" id="prevBtn">← Précédent</button>`;
-    if (isLast) html += `<button type="button" id="submitBtn">Soumettre</button>`; else html += `<button type="button" id="nextBtn">Suivant →</button>`;
+    if (isLast) {
+      html += isCase ? `<button type="button" id="finishBtn">Terminer</button>` : `<button type="button" id="submitBtn">Soumettre</button>`;
+    } else {
+      html += `<button type="button" id="nextBtn">Suivant →</button>`;
+    }
     html += `</div>`;
     appEl.innerHTML = html;
 
@@ -98,7 +121,7 @@
       if (q.type === 'mcq') {
         const v = document.querySelector('input[name="answer"]:checked')?.value;
         if (v !== undefined) currentQuizAnswers[currentQuestionIndex] = Number(v);
-      } else {
+      } else if (q.type === 'text') {
         const v = document.getElementById('answerText').value.trim();
         if (v) currentQuizAnswers[currentQuestionIndex] = v;
       }
@@ -106,6 +129,7 @@
 
     document.getElementById('prevBtn')?.addEventListener('click', ()=>{ saveCurrentAnswer(); currentQuestionIndex--; renderQuestion(); });
     document.getElementById('nextBtn')?.addEventListener('click', ()=>{ saveCurrentAnswer(); currentQuestionIndex++; renderQuestion(); });
+    document.getElementById('finishBtn')?.addEventListener('click', ()=>{ history.replaceState(null,'','/'); renderList(); });
     document.getElementById('submitBtn')?.addEventListener('click', ()=>{
       saveCurrentAnswer();
       calculateAndSubmitResult();
@@ -117,6 +141,7 @@
     let totalPoints = 0;
     const detailedResults = [];
     currentQuiz.questions.forEach((q,i)=>{
+      if (q.type === 'case') return;
       const pts = q.points || 1;
       totalPoints += pts;
       let isCorrect = false;
@@ -129,10 +154,11 @@
       detailedResults.push({index: i, correct: isCorrect});
     });
     const correctCount = detailedResults.filter(r => r.correct).length;
-    appEl.innerHTML = `<h2>Resultat</h2><p>Vous avez obtenu <strong>${earnedPoints} / ${totalPoints}</strong> points</p><p class="small">(${correctCount} / ${currentQuiz.questions.length} questions correctes)</p><button id="again">Retour aux quizz</button>`;
+    const answerableTotal = currentQuiz.questions.filter(q => q.type !== 'case').length;
+    appEl.innerHTML = `<h2>Resultat</h2><p>Vous avez obtenu <strong>${earnedPoints} / ${totalPoints}</strong> points</p><p class="small">(${correctCount} / ${answerableTotal} questions correctes)</p><button id="again">Retour aux quizz</button>`;
     // send result to server
     try{
-      const payload = { participantId: currentParticipantId, quizId: currentQuiz.id, score: earnedPoints, correct: correctCount, total: currentQuiz.questions.length };
+      const payload = { participantId: currentParticipantId, quizId: currentQuiz.id, score: earnedPoints, correct: correctCount, total: answerableTotal };
       fetch(API_BASE + '/api/submit', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     }catch(err){ console.warn('Could not send result', err); }
     document.getElementById('again').addEventListener('click', ()=>{ history.replaceState(null,'','/'); renderList(); });

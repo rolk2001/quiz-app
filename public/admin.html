@@ -42,7 +42,7 @@
         <div style="background:white;padding:20px;border-radius:8px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto">
           <h4 id="editorTitle">Ajouter une question</h4>
           <label>Texte: <input id="eqText" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px"></label><br>
-          <label>Type: <select id="eqType" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px"><option value="mcq">QCM</option><option value="text">Texte</option></select></label><br>
+          <label>Type: <select id="eqType" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px"><option value="mcq">QCM</option><option value="text">Texte</option><option value="case">Etude de cas</option></select></label><br>
           <div id="eMcqArea">
             <label>Ajouter une option:<br><input id="eqNewOption" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px"></label>
             <button type="button" id="addOptionBtn" style="width:100%;margin-top:6px;padding:6px;background:#4caf50;color:white;border:none;border-radius:4px;cursor:pointer">+ Ajouter cette option</button>
@@ -53,7 +53,7 @@
             <label>Réponse attendue: <input id="eqTextAns" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px"></label><br>
           </div>
           <label>Points (pour cette question): <input id="eqPoints" type="number" min="1" value="1" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px"></label><br>
-          <div style="margin-top:12px;font-size:0.9rem;color:#666">Les points seront additionnés et normalisés sur 20.</div>
+          <div style="margin-top:12px;font-size:0.9rem;color:#666">Les points sont ignores pour "Etude de cas".</div>
           <div style="margin-top:12px">
             <button id="saveQuestionBtn" style="background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;margin-right:8px">Enregistrer</button>
             <button id="cancelQuestionBtn" style="background:#ccc;border:none;padding:8px 12px;border-radius:6px;cursor:pointer">Annuler</button>

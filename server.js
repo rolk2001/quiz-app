@@ -54,7 +54,7 @@ const quizSchema = new mongoose.Schema({
   description: String,
   questions: [
     {
-      type: { type: String, enum: ['mcq', 'text'], required: true },
+      type: { type: String, enum: ['mcq', 'text', 'case'], required: true },
       text: { type: String, required: true },
       options: [String], // for MCQ
       answer: mongoose.Schema.Types.Mixed, // index for MCQ or string for text
@@ -138,17 +138,22 @@ app.post('/api/admin/quizzes', requireAdmin, async (req,res)=>{
     for (let i = 0; i < newQuiz.questions.length; i++) {
       const q = newQuiz.questions[i];
       if (!q.text) return res.status(400).json({error:`Question ${i+1}: text is required`});
-      if (!q.type) return res.status(400).json({error:`Question ${i+1}: type is required (mcq or text)`});
+      if (!q.type) return res.status(400).json({error:`Question ${i+1}: type is required (mcq, text, or case)`});
       if (q.type === 'mcq') {
         if (!Array.isArray(q.options) || q.options.length === 0) return res.status(400).json({error:`Question ${i+1}: must have at least 1 option`});
         if (typeof q.answer !== 'number' || q.answer < 0 || q.answer >= q.options.length) return res.status(400).json({error:`Question ${i+1}: answer index out of range (${q.answer} not valid for ${q.options.length} options)`});
       } else if (q.type === 'text') {
         if (!q.answer) return res.status(400).json({error:`Question ${i+1}: answer text is required`});
+      } else if (q.type !== 'case') {
+        return res.status(400).json({error:`Question ${i+1}: invalid type`});
       }
     }
     
     // Ensure all questions have points
-    newQuiz.questions = newQuiz.questions.map(qst => ({ ...qst, points: qst.points || 1 }));
+    newQuiz.questions = newQuiz.questions.map(qst => ({
+      ...qst,
+      points: qst.type === 'case' ? 0 : (qst.points || 1)
+    }));
     const quiz = new Quiz(newQuiz);
     console.log('Saving quiz:', quiz);
     await quiz.save();
@@ -170,17 +175,22 @@ app.put('/api/admin/quizzes/:id', requireAdmin, async (req,res)=>{
     for (let i = 0; i < upd.questions.length; i++) {
       const q = upd.questions[i];
       if (!q.text) return res.status(400).json({error:`Question ${i+1}: text is required`});
-      if (!q.type) return res.status(400).json({error:`Question ${i+1}: type is required (mcq or text)`});
+      if (!q.type) return res.status(400).json({error:`Question ${i+1}: type is required (mcq, text, or case)`});
       if (q.type === 'mcq') {
         if (!Array.isArray(q.options) || q.options.length === 0) return res.status(400).json({error:`Question ${i+1}: must have at least 1 option`});
         if (typeof q.answer !== 'number' || q.answer < 0 || q.answer >= q.options.length) return res.status(400).json({error:`Question ${i+1}: answer index out of range`});
       } else if (q.type === 'text') {
         if (!q.answer) return res.status(400).json({error:`Question ${i+1}: answer text is required`});
+      } else if (q.type !== 'case') {
+        return res.status(400).json({error:`Question ${i+1}: invalid type`});
       }
     }
     
     // Ensure all questions have points
-    upd.questions = upd.questions.map(qst => ({ ...qst, points: qst.points || 1 }));
+    upd.questions = upd.questions.map(qst => ({
+      ...qst,
+      points: qst.type === 'case' ? 0 : (qst.points || 1)
+    }));
     const quiz = await Quiz.findOneAndUpdate({ id: req.params.id }, upd, { new: true });
     if (!quiz) return res.status(404).json({error:'Quiz not found'});
     res.json({ok:true});
