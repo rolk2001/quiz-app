@@ -81,11 +81,14 @@ const Result = mongoose.model('Result', resultSchema);
 const adminTokens = new Set();
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
+  console.log('Login attempt:', email);
   if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
     const token = Math.random().toString(36).slice(2);
     adminTokens.add(token);
+    console.log('Login successful, token:', token);
     return res.json({ ok: true, token });
   }
+  console.log('Login failed: invalid credentials');
   return res.status(401).json({ ok: false, error: 'Invalid credentials' });
 });
 
@@ -97,6 +100,7 @@ app.post('/api/logout', (req, res) => {
 
 function requireAdmin(req, res, next) {
   const token = req.headers['x-admin-token'];
+  console.log('Checking admin token:', token ? 'present' : 'missing', 'Valid tokens:', adminTokens.size);
   if (token && adminTokens.has(token)) return next();
   return res.status(401).json({ error: 'Unauthorized' });
 }
