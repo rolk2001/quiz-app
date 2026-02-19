@@ -115,14 +115,33 @@ app.get('/api/admin/quizzes', requireAdmin, async (req,res)=>{
 app.post('/api/admin/quizzes', requireAdmin, async (req,res)=>{
   try {
     const newQuiz = req.body;
-    if(!newQuiz || !newQuiz.id) return res.status(400).json({error:'Invalid quiz'});
+    console.log('POST /api/admin/quizzes body:', JSON.stringify(newQuiz, null, 2));
+    if(!newQuiz || !newQuiz.id) return res.status(400).json({error:'Invalid quiz: missing id'});
+    if(!newQuiz.title) return res.status(400).json({error:'Invalid quiz: missing title'});
     if(!Array.isArray(newQuiz.questions) || newQuiz.questions.length === 0) return res.status(400).json({error:'Quiz must include at least one question'});
+    
+    // Validate each question
+    for (let i = 0; i < newQuiz.questions.length; i++) {
+      const q = newQuiz.questions[i];
+      if (!q.text) return res.status(400).json({error:`Question ${i+1}: text is required`});
+      if (!q.type) return res.status(400).json({error:`Question ${i+1}: type is required (mcq or text)`});
+      if (q.type === 'mcq') {
+        if (!Array.isArray(q.options) || q.options.length === 0) return res.status(400).json({error:`Question ${i+1}: must have at least 1 option`});
+        if (typeof q.answer !== 'number' || q.answer < 0 || q.answer >= q.options.length) return res.status(400).json({error:`Question ${i+1}: answer index out of range (${q.answer} not valid for ${q.options.length} options)`});
+      } else if (q.type === 'text') {
+        if (!q.answer) return res.status(400).json({error:`Question ${i+1}: answer text is required`});
+      }
+    }
+    
     // Ensure all questions have points
     newQuiz.questions = newQuiz.questions.map(qst => ({ ...qst, points: qst.points || 1 }));
     const quiz = new Quiz(newQuiz);
+    console.log('Saving quiz:', quiz);
     await quiz.save();
+    console.log('Quiz saved successfully');
     res.json({ok:true});
   } catch (err) {
+    console.error('Error saving quiz:', err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -132,6 +151,20 @@ app.put('/api/admin/quizzes/:id', requireAdmin, async (req,res)=>{
   try {
     const upd = req.body;
     if(!Array.isArray(upd.questions) || upd.questions.length === 0) return res.status(400).json({error:'Quiz must include at least one question'});
+    
+    // Validate each question
+    for (let i = 0; i < upd.questions.length; i++) {
+      const q = upd.questions[i];
+      if (!q.text) return res.status(400).json({error:`Question ${i+1}: text is required`});
+      if (!q.type) return res.status(400).json({error:`Question ${i+1}: type is required (mcq or text)`});
+      if (q.type === 'mcq') {
+        if (!Array.isArray(q.options) || q.options.length === 0) return res.status(400).json({error:`Question ${i+1}: must have at least 1 option`});
+        if (typeof q.answer !== 'number' || q.answer < 0 || q.answer >= q.options.length) return res.status(400).json({error:`Question ${i+1}: answer index out of range`});
+      } else if (q.type === 'text') {
+        if (!q.answer) return res.status(400).json({error:`Question ${i+1}: answer text is required`});
+      }
+    }
+    
     // Ensure all questions have points
     upd.questions = upd.questions.map(qst => ({ ...qst, points: qst.points || 1 }));
     const quiz = await Quiz.findOneAndUpdate({ id: req.params.id }, upd, { new: true });

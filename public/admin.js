@@ -167,7 +167,9 @@ document.getElementById('publishQuizBtn').addEventListener('click', async ()=>{
     document.getElementById('quizDesc').value = ''; 
     loadAdminData(); 
   } else {
-    const err = await r.json().catch(()=>({error:'unknown'})); alert('Erreur: '+(err.error||'Erreur serveur'));
+    const err = await r.json().catch(()=>({error:'unknown'})); 
+    console.error('Error publishing quiz:', err);
+    alert('Erreur: '+(err.error||'Erreur serveur'));
   }
 });
 
