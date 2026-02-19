@@ -8,11 +8,37 @@
   let currentQuestionIndex = 0; // tracks which question being displayed
   let currentQuiz = null; // stores current quiz being taken
   let currentParticipantId = ''; // stores participant ID
-  fetch('quizzes.json').then(r=>r.json()).then(j=>{ quizzes = j; init(); }).catch(()=>{ appEl.innerHTML = '<p>Impossible de charger les quizz.</p>'; });
+  
+  async function loadQuizzes() {
+    try {
+      const r = await fetch(API_BASE + '/api/admin/quizzes');
+      if (r.ok) {
+        quizzes = await r.json();
+        init();
+      } else {
+        appEl.innerHTML = '<p>Erreur lors du chargement des quizzes.</p>';
+      }
+    } catch (err) {
+      console.error('Error loading quizzes:', err);
+      appEl.innerHTML = '<p>Impossible de charger les quizzes.</p>';
+    }
+  }
+  
+  loadQuizzes();
 
   function getQuizById(id){ return quizzes.find(q=>q.id===id); }
 
-  function renderList(){
+  async function renderList(){
+    // reload quizzes from API to get latest list
+    try {
+      const r = await fetch(API_BASE + '/api/admin/quizzes');
+      if (r.ok) {
+        quizzes = await r.json();
+      }
+    } catch (err) {
+      console.error('Error reloading quizzes:', err);
+    }
+    
     appEl.innerHTML = '';
     const list = document.createElement('div'); list.className='list';
     quizzes.forEach(q=>{
