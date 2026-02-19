@@ -1,0 +1,17 @@
+# Environment variables - CRITICAL FOR SECURITY
+.env
+
+# Node modules
+node_modules/
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Data files (but keep the structure)
+/data/results.json

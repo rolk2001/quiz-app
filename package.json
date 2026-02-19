@@ -1,0 +1,14 @@
+{
+  "name": "quiz-formation",
+  "version": "1.0.0",
+  "description": "Site de quiz avec tableau de bord admin",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2"
+  }
+}

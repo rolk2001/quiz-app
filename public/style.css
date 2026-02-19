@@ -1,0 +1,17 @@
+:root{--bg:#f7f8fb;--card:#fff;--accent:#2b6cb0;--muted:#6b7280}
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:#111}
+.container{max-width:900px;margin:32px auto;padding:16px}
+h1{text-align:center;color:var(--accent);margin-bottom:16px}
+.list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.quiz-card{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.quiz-card h2{margin:0 0 8px 0;font-size:1.1rem}
+.quiz-card p{color:var(--muted);margin:0 0 12px}
+button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+button.secondary{background:#e2e8f0;color:#111}
+.question{margin-bottom:12px;padding:10px;background:#fff;border-radius:6px}
+.qtext{margin:0 0 8px}
+label{display:block;margin:6px 0}
+input[type="text"]{width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px}
+.actions{display:flex;gap:8px;margin-top:12px}
+@media (max-width:480px){.container{margin:16px;padding:12px}}
