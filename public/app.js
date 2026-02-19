@@ -1,6 +1,7 @@
 (function(){
   const appEl = document.getElementById('app');
-  const API_BASE = (location.port === '3000') ? '' : 'http://localhost:3000';
+  // Use relative URLs so it works on localhost AND Render
+  const API_BASE = '';
   function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   let quizzes = [];
   let currentQuizAnswers = {}; // stores user answers during quiz

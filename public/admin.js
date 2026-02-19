@@ -1,5 +1,6 @@
 async function $(sel){ return document.querySelector(sel); }
-const API_BASE = (location.port === '3000') ? '' : 'http://localhost:3000';
+// Use relative URLs so it works on localhost AND Render
+const API_BASE = '';
 
 // Question builder state
 let questions = [];
