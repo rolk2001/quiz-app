@@ -11,7 +11,7 @@
   
   async function loadQuizzes() {
     try {
-      const r = await fetch(API_BASE + '/api/admin/quizzes');
+      const r = await fetch(API_BASE + '/api/quizzes');
       if (r.ok) {
         quizzes = await r.json();
         init();
@@ -31,7 +31,7 @@
   async function renderList(){
     // reload quizzes from API to get latest list
     try {
-      const r = await fetch(API_BASE + '/api/admin/quizzes');
+      const r = await fetch(API_BASE + '/api/quizzes');
       if (r.ok) {
         quizzes = await r.json();
       }

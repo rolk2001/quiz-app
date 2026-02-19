@@ -105,6 +105,16 @@ function requireAdmin(req, res, next) {
   return res.status(401).json({ error: 'Unauthorized' });
 }
 
+// Public: list quizzes (for participants)
+app.get('/api/quizzes', async (req,res)=>{
+  try {
+    const quizzes = await Quiz.find();
+    res.json(quizzes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Admin: list quizzes
 app.get('/api/admin/quizzes', requireAdmin, async (req,res)=>{
   try {
