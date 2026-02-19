@@ -3,6 +3,29 @@
   // Use relative URLs so it works on localhost AND Render
   const API_BASE = '';
   function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function optionLabel(idx){
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    return idx >= 0 && idx < alphabet.length ? alphabet[idx] : `opt${idx+1}`;
+  }
+
+  function questionLabel(index){
+    if (!currentQuiz) return '';
+    const q = currentQuiz.questions[index];
+    if (q.type === 'case') return `Etude de cas ${index + 1}`;
+    const lastCase = currentQuiz.questions
+      .slice(0, index + 1)
+      .map((x, i) => ({ x, i }))
+      .filter(obj => obj.x.type === 'case')
+      .pop();
+    if (lastCase) {
+      const subs = currentQuiz.questions
+        .slice(lastCase.i + 1, index + 1)
+        .filter(x => x.type !== 'case');
+      const letter = optionLabel(subs.length - 1);
+      return `Question ${lastCase.i + 1}${letter}`;
+    }
+    return `Question ${index + 1}`;
+  }
   let quizzes = [];
   let currentQuizAnswers = {}; // stores user answers during quiz
   let currentQuestionIndex = 0; // tracks which question being displayed
@@ -80,12 +103,13 @@
     const isLast = currentQuestionIndex === totalQ - 1;
     const isCase = q.type === 'case';
     const answerableIndex = isCase ? null : currentQuiz.questions.slice(0, currentQuestionIndex + 1).filter(x => x.type !== 'case').length;
+    const label = questionLabel(currentQuestionIndex);
 
     let html = `<h2>${esc(currentQuiz.title)}</h2>`;
     if (isCase) {
-      html += `<p style="color:#666;font-size:0.9rem">Etude de cas</p>`;
+      html += `<p style="color:#666;font-size:0.9rem">${esc(label)}</p>`;
     } else {
-      html += `<p style="color:#666;font-size:0.9rem">Question ${answerableIndex} / ${answerableTotal}</p>`;
+      html += `<p style="color:#666;font-size:0.9rem">${esc(label)} (${answerableIndex} / ${answerableTotal})</p>`;
     }
 
     // Show nearest previous case as context for sub-questions
@@ -94,11 +118,11 @@
       html += `<div style="background:#f7f7f7;border-left:4px solid #888;padding:10px;margin:10px 0;border-radius:6px"><strong>Etude de cas</strong><div style="margin-top:6px">${esc(caseIndex.x.text)}</div></div>`;
     }
 
-    html += `<div class="question"><p class="qtext">${esc(q.text)}</p>`;
+    html += `<div class="question"><p class="qtext"><strong>${esc(label)}.</strong> ${esc(q.text)}</p>`;
     if(q.type==='mcq'){
       q.options.forEach((opt,ii)=> {
         const checked = currentQuizAnswers[currentQuestionIndex] === ii ? 'checked' : '';
-        html += `<label><input type="radio" name="answer" value="${ii}" ${checked}> ${esc(opt)}</label>`;
+        html += `<label><input type="radio" name="answer" value="${ii}" ${checked}> ${optionLabel(ii)}) ${esc(opt)}</label>`;
       });
     } else if (q.type === 'text') {
       const txtVal = currentQuizAnswers[currentQuestionIndex] || '';

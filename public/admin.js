@@ -59,12 +59,17 @@ function updateModalDisplay() {
   }
 }
 
+function optionLabel(idx){
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+  return idx >= 0 && idx < alphabet.length ? alphabet[idx] : `opt${idx+1}`;
+}
+
 function renderEditorOptions() {
   const el = document.getElementById('eOptionsList');
   if (editorOptions.length === 0) { el.innerHTML = '<em style="color:#999">Aucune option</em>'; return; }
   el.innerHTML = editorOptions.map((opt, idx) => {
     return `<div style="background:#f0f0f0;padding:8px;margin:4px 0;border-radius:4px;display:flex;justify-content:space-between">
-      <span>${idx}. ${escapeHtml(opt)}</span>
+      <span>${optionLabel(idx)}) ${escapeHtml(opt)}</span>
       <button type="button" onclick="deleteEditorOption(${idx})" style="background:#d32f2f;color:white;border:none;padding:2px 6px;border-radius:3px;cursor:pointer">✕</button>
     </div>`;
   }).join('');
